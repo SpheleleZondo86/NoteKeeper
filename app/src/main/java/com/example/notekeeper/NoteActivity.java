@@ -18,7 +18,7 @@ public class NoteActivity extends AppCompatActivity {
     public static final String ORIGINAL_NOTE_TITLE = "com.example.notekeeper.ORIGINAL_NOTE_TITLE";
     public static final String ORIGINAL_NOTE_TEXT = "com.example.notekeeper.ORIGINAL_NOTE_TEXT";
 
-    private NoteInfo noteInfo;
+    private NoteInfo note;
     private boolean isNewNote;
     private Spinner spinnerCourses;
     private EditText textNoteTitle;
@@ -69,34 +69,34 @@ public class NoteActivity extends AppCompatActivity {
     private void saveOriginalNoteValues() {
         if(isNewNote)
             return;
-        originalNoteCourseId = noteInfo.getCourse().getCourseId();
-        originalNoteTitle = noteInfo.getTitle();
-        originalNoteText = noteInfo.getText();
+        originalNoteCourseId = note.getCourse().getCourseId();
+        originalNoteTitle = note.getTitle();
+        originalNoteText = note.getText();
     }
 
     private void displayNote(Spinner spinnerCourses, EditText textNoteTitle, EditText textNoteText) {
         List<CourseInfo> courses = DataManager.getInstance().getCourses();
-        int courseIndex = courses.indexOf(noteInfo.getCourse());
+        int courseIndex = courses.indexOf(note.getCourse());
         spinnerCourses.setSelection(courseIndex);
-        textNoteText.setText(noteInfo.getText());
-        textNoteTitle.setText(noteInfo.getTitle());
+        textNoteText.setText(note.getText());
+        textNoteTitle.setText(note.getTitle());
     }
 
     private void readDisplayStateValues() {
         Intent intent = getIntent();
-        int position = intent.getIntExtra(NOTE_POSITION, POSITION_NOT_SET);
-        isNewNote = position == POSITION_NOT_SET;
+        notePosition = intent.getIntExtra(NOTE_POSITION, POSITION_NOT_SET);
+        isNewNote = notePosition == POSITION_NOT_SET;
         if(isNewNote){
             createNewNote();
         }else{
-            noteInfo = DataManager.getInstance().getNotes().get(position);
+            note = DataManager.getInstance().getNotes().get(notePosition);
         }
     }
 
     private void createNewNote() {
         DataManager dataManager = DataManager.getInstance();
         notePosition = dataManager.createNewNote();
-        noteInfo = dataManager.getNotes().get(notePosition);
+        note = dataManager.getNotes().get(notePosition);
     }
 
     @Override
@@ -122,15 +122,15 @@ public class NoteActivity extends AppCompatActivity {
 
     private void storePreviousNoteValues() {
         CourseInfo course = DataManager.getInstance().getCourse(originalNoteCourseId);
-        noteInfo.setCourse(course);
-        noteInfo.setTitle(originalNoteTitle);
-        noteInfo.setText(originalNoteText);
+        note.setCourse(course);
+        note.setTitle(originalNoteTitle);
+        note.setText(originalNoteText);
     }
 
     private void saveNote() {
-        noteInfo.setCourse((CourseInfo)spinnerCourses.getSelectedItem());
-        noteInfo.setTitle(textNoteTitle.getText().toString());
-        noteInfo.setText(textNoteText.getText().toString());
+        note.setCourse((CourseInfo)spinnerCourses.getSelectedItem());
+        note.setTitle(textNoteTitle.getText().toString());
+        note.setText(textNoteText.getText().toString());
     }
 
     @Override
@@ -147,9 +147,31 @@ public class NoteActivity extends AppCompatActivity {
         }else if(id == R.id.action_cancel){
             isCancelling = true;
             finish();
+        }else if(id == R.id.action_next){
+            moveNext();
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        MenuItem nextMenuItem = menu.findItem(R.id.action_next);
+        MenuItem emailMenuItem = menu.findItem(R.id.action_send_mail);
+        int lastNoteIndex = DataManager.getInstance().getNotes().size()-1;
+        nextMenuItem.setEnabled(notePosition < lastNoteIndex);
+        emailMenuItem.setVisible(!textNoteTitle.getText().toString().isEmpty() || !textNoteText.getText().toString().isEmpty());
+        nextMenuItem.setVisible(!textNoteTitle.getText().toString().isEmpty() || !textNoteText.getText().toString().isEmpty());
+        return super.onPrepareOptionsMenu(menu);
+    }
+
+    private void moveNext() {
+        saveNote();
+        ++notePosition;
+        note = DataManager.getInstance().getNotes().get(notePosition);
+        saveOriginalNoteValues();
+        displayNote(spinnerCourses, textNoteTitle, textNoteText);
+        invalidateOptionsMenu();
     }
 
     private void sendMail() {
