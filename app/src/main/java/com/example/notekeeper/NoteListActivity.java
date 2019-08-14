@@ -50,5 +50,4 @@ public class NoteListActivity extends AppCompatActivity {
         adapter = new NoteRecyclerAdapter(this, notes);
         recyclerView.setAdapter(adapter);
     }
-
 }
