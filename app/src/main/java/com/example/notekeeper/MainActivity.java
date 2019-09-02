@@ -1,21 +1,27 @@
 package com.example.notekeeper;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
-import android.support.v7.widget.GridLayoutManager;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
-import android.view.View;
-import android.support.v4.view.GravityCompat;
-import android.support.v7.app.ActionBarDrawerToggle;
-import android.view.MenuItem;
-import android.support.design.widget.NavigationView;
-import android.support.v4.widget.DrawerLayout;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
+import android.preference.PreferenceManager;
+import android.view.View;
+import androidx.core.view.GravityCompat;
+import androidx.appcompat.app.ActionBarDrawerToggle;
+import android.view.MenuItem;
+import com.google.android.material.navigation.NavigationView;
+import com.google.android.material.snackbar.Snackbar;
+
+import androidx.drawerlayout.widget.DrawerLayout;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import android.view.Menu;
+import android.widget.TextView;
 
 import java.util.List;
 
@@ -40,6 +46,9 @@ public class MainActivity extends AppCompatActivity
                 startActivity(new Intent(MainActivity.this, NoteActivity.class));
             }
         });
+
+        //PreferenceManager.setDefaultValues(this, R.xml.root_preferences, false);
+
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
         NavigationView navigationView = findViewById(R.id.nav_view);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
@@ -54,6 +63,19 @@ public class MainActivity extends AppCompatActivity
     protected void onPostResume() {
         super.onPostResume();
         noteRecyclerAdapter.notifyDataSetChanged();
+        updateNavHeader();
+    }
+
+    private void updateNavHeader() {
+        NavigationView navigationView = findViewById(R.id.nav_view);
+        View header = navigationView.getHeaderView(0);
+        TextView textUserName = header.findViewById(R.id.text_user_name);
+        TextView textEmailAddress = header.findViewById(R.id.text_email_address);
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        String userName = sharedPreferences.getString("user_display_name", getString(R.string.pref_default_display_name));
+        String emailAddress = sharedPreferences.getString("user_email_address", getString(R.string.pref_default_email_address));
+        textUserName.setText(userName);
+        textEmailAddress.setText(emailAddress);
     }
 
     public void initializeDisplayContent() {
@@ -114,6 +136,8 @@ public class MainActivity extends AppCompatActivity
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
+            Intent intent = new Intent(this,SettingsActivity.class);
+            startActivity(intent);
             return true;
         }
 
@@ -131,7 +155,7 @@ public class MainActivity extends AppCompatActivity
         } else if (id == R.id.nav_courses) {
             displayCourse();
         } else if (id == R.id.nav_share) {
-
+            handleShare();
         } else if (id == R.id.nav_send) {
 
         }
@@ -139,5 +163,12 @@ public class MainActivity extends AppCompatActivity
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    private void handleShare() {
+        View view = findViewById(R.id.list_items);
+        Snackbar.make(view, "Share to - " +
+                PreferenceManager.getDefaultSharedPreferences(this).getString("user_favourite_social", ""),
+                Snackbar.LENGTH_LONG).show();
     }
 }
